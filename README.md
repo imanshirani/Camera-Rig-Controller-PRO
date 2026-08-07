@@ -1,6 +1,6 @@
 # Camera Rig Controller PRO
 
-A professional camera rigging tool for **3ds Max**, built with Python and PySide6.
+
 
 [![Donate ❤️](https://img.shields.io/badge/Donate-PayPal-00457C?style=flat-square&logo=paypal&logoColor=white)](https://www.paypal.com/donate/?hosted_button_id=LAMNRY6DDWDC4)
 ![3dsmax](https://img.shields.io/badge/Autodesk-3ds%20Max-0696D7?style=flat-square&logo=autodesk)
@@ -9,9 +9,15 @@ A professional camera rigging tool for **3ds Max**, built with Python and PySide
 ![License](https://img.shields.io/badge/License-MIT-purple?style=flat-square)
 ![Version](https://img.shields.io/badge/version-0.0.1-orange)
 
+
+A professional camera rigging tool for **3ds Max**, built with Python and PySide6.
+
+![screenshot](etc/Screenshot.png)
+
+
 ---
 
-## Features
+## ✨ Features
 
 ### Rig System
 - One-click rig installation on any camera type (Standard, Physical, VRay, Corona)
@@ -93,7 +99,7 @@ A professional camera rigging tool for **3ds Max**, built with Python and PySide
 
 ---
 
-## Requirements
+## 📒 Requirements
 
 - **3ds Max 2025+**
 - **Python 3.x** (bundled with 3ds Max)
@@ -101,7 +107,7 @@ A professional camera rigging tool for **3ds Max**, built with Python and PySide
 
 ---
 
-## Installation
+## 📦 Installation
 
 1. Clone or download this repository
 2. Place the folder anywhere on your system
