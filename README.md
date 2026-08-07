@@ -16,8 +16,9 @@ A professional camera rigging tool for **3ds Max**, built with Python and PySide
 ### Rig System
 - One-click rig installation on any camera type (Standard, Physical, VRay, Corona)
 - Full crane + dolly hierarchy: `DOLLY → CRANE_BASE → CRANE_ARM → MASTER → PIVOT → Camera`
-- Custom shape support via `assets/shape.max`
 - Adjustable crane height before install
+
+![screenshot](etc/Setuptab.png)
 
 ### Dolly Tab
 - Path-based dolly movement with percentage control
@@ -26,14 +27,20 @@ A professional camera rigging tool for **3ds Max**, built with Python and PySide
 - Custom path assignment with Flow and Bank support
 - Bake dolly animation with Ease In/Out and tangent control
 
+![screenshot](etc/Dollytab.png)
+
 ### Crane Tab
 - Arm pitch (X rotation)
 - Base yaw (Z rotation)
 - Arm reach / height control
 
+![screenshot](etc/Cranetab.png)
+
 ### Motion Tab
 - **Steadicam** — lag helper node between dolly and crane
 - **Camera Shake** — Noise Position controller on pivot with per-axis strength, frequency, and seed
+
+![screenshot](etc/Motiontab.png)
 
 ### Direct Controls Tab
 - Truck (left/right relative to camera direction)
@@ -43,6 +50,8 @@ A professional camera rigging tool for **3ds Max**, built with Python and PySide
 - Roll / Dutch Tilt
 - Lock Target to Camera toggle
 
+![screenshot](etc/Directcontroltab.png)
+
 ### Lens Tab
 - Focal length control (universal — works with all camera types)
 - Near/Far clip planes
@@ -50,6 +59,8 @@ A professional camera rigging tool for **3ds Max**, built with Python and PySide
 - Rack Focus — bake animated focus pull between two distances
 - Focus Subject Picker — click any object to set focus distance
 - Camera property logger for debugging
+
+![screenshot](etc/Setuptab.png)
 
 ### Framing Tab
 - Cinema aspect ratio presets (2.39:1, 1.85:1, 16:9, IMAX, and more)
@@ -64,23 +75,29 @@ A professional camera rigging tool for **3ds Max**, built with Python and PySide
   - Golden Spiral
 - Per-guide color picker with color presets
 
+![screenshot](etc/Framintab.png)
+
 ### Bookmarks Tab
 - Save named camera position snapshots
 - Restore any saved bookmark instantly
 - Delete bookmarks
+
+![screenshot](etc/Bookmarkstab.png)
 
 ### Vertigo Tab
 - Dolly Zoom (Hitchcock effect) — simultaneous dolly movement and focal length change
 - Preview panel showing required focal length at end frame
 - Push In / Pull Out direction
 
+![screenshot](etc/Vertigo.png)
+
 ---
 
 ## Requirements
 
-- **3ds Max 2022+**
+- **3ds Max 2025+**
 - **Python 3.x** (bundled with 3ds Max)
-- **PySide6** (bundled with 3ds Max 2022+)
+- **PySide6** (bundled with 3ds Max 2025+)
 
 ---
 
@@ -118,7 +135,7 @@ To use custom shapes for rig controls, create a `shape.max` file inside the `ass
 | `TRACK_CTRL` | Track Handle |
 
 If a shape is not found in the file, a primitive fallback is used automatically.
-
+Note - you can make any shape you  want.
 ---
 
 ## Usage
@@ -169,6 +186,7 @@ camera_rig/
 | Physical Camera | ✅ | ✅ | ✅ |
 | VRay Physical Camera | ✅ | ✅ | ✅ |
 | Corona Camera | ✅ | ✅ | ✅ |
+| Octane Camera | ✅ | ✅ | ❌ |
 
 ---
 
