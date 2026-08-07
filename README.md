@@ -2,9 +2,12 @@
 
 A professional camera rigging tool for **3ds Max**, built with Python and PySide6.
 
+[![Donate ❤️](https://img.shields.io/badge/Donate-PayPal-00457C?style=flat-square&logo=paypal&logoColor=white)](https://www.paypal.com/donate/?hosted_button_id=LAMNRY6DDWDC4)
+![3dsmax](https://img.shields.io/badge/Autodesk-3ds%20Max-0696D7?style=flat-square&logo=autodesk)
+![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=flat-square&logo=python&logoColor=white)
+![PySide6](https://img.shields.io/badge/GUI-PySide6-41CD52?style=flat-square&logo=qt&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-purple?style=flat-square)
 ![Version](https://img.shields.io/badge/version-0.0.1-orange)
-![3ds Max](https://img.shields.io/badge/3ds%20Max-2022%2B-blue)
-![Python](https://img.shields.io/badge/Python-3.x-blue)
 
 ---
 
