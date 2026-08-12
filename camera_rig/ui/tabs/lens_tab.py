@@ -1,0 +1,122 @@
+from PySide6.QtWidgets import (
+    QWidget, QVBoxLayout, QHBoxLayout, QFormLayout, QGroupBox,
+    QLabel, QDoubleSpinBox, QCheckBox, QPushButton, QSpinBox, QComboBox,
+)
+from camera_rig.widgets import SliderSpinRow
+
+
+def build_lens_tab(ui):
+    """Build the Lens tab and attach widgets to the ui instance."""
+    tab = QWidget()
+    layout = QVBoxLayout()
+    layout.setContentsMargins(10, 12, 10, 10)
+    layout.setSpacing(8)
+
+    # ── Optics ───────────────────────────────────────────────────────
+    grp_opt = QGroupBox("Optics")
+    go = QVBoxLayout()
+    go.setSpacing(8)
+    ui.focal_row = SliderSpinRow("Focal Length", 10.0, 600.0, 35.0, decimals=1, unit=" mm")
+    go.addWidget(ui.focal_row)
+    fov_row = QHBoxLayout()
+    fov_lbl = QLabel("FOV:")
+    fov_lbl.setObjectName("lbl_section")
+    ui.fov_label = QLabel("54.4°")
+    ui.fov_label.setStyleSheet("color:#e8823c; font-weight:600;")
+    fov_row.addWidget(fov_lbl)
+    fov_row.addStretch()
+    fov_row.addWidget(ui.fov_label)
+    go.addLayout(fov_row)
+    grp_opt.setLayout(go)
+    layout.addWidget(grp_opt)
+
+    # ── Clipping ─────────────────────────────────────────────────────
+    grp_clip = QGroupBox("Clipping")
+    gc = QFormLayout()
+    gc.setSpacing(6)
+    ui.near_clip_spin = QDoubleSpinBox()
+    ui.near_clip_spin.setRange(0.1, 10000.0)
+    ui.near_clip_spin.setValue(1.0)
+    ui.near_clip_spin.setSuffix(" u")
+    ui.far_clip_spin = QDoubleSpinBox()
+    ui.far_clip_spin.setRange(1.0, 1000000.0)
+    ui.far_clip_spin.setValue(10000.0)
+    ui.far_clip_spin.setSuffix(" u")
+    gc.addRow("Near Clip:", ui.near_clip_spin)
+    gc.addRow("Far Clip:", ui.far_clip_spin)
+    grp_clip.setLayout(gc)
+    layout.addWidget(grp_clip)
+
+    # ── Depth of Field ───────────────────────────────────────────────
+    grp_dof = QGroupBox("Depth of Field")
+    gd = QVBoxLayout()
+    gd.setSpacing(8)
+    ui.dof_checkbox = QCheckBox("Enable DOF")
+    gd.addWidget(ui.dof_checkbox)
+    ui.focus_dist_row = SliderSpinRow("Focus Distance", 0.1, 10000.0, 300.0, decimals=1, unit=" u")
+    gd.addWidget(ui.focus_dist_row)
+    ui.pick_focus_btn = QPushButton("Pick Focus Subject")
+    gd.addWidget(ui.pick_focus_btn)
+    grp_dof.setLayout(gd)
+    layout.addWidget(grp_dof)
+
+    # ── Rack Focus ───────────────────────────────────────────────────
+    grp_rack = QGroupBox("Rack Focus")
+    gr = QVBoxLayout()
+    gr.setSpacing(6)
+    ui.rack_from_row = SliderSpinRow("From Distance", 0.1, 10000.0, 100.0, decimals=1, unit=" u")
+    ui.rack_to_row   = SliderSpinRow("To Distance",   0.1, 10000.0, 500.0, decimals=1, unit=" u")
+    gr.addWidget(ui.rack_from_row)
+    gr.addWidget(ui.rack_to_row)
+
+    frame_row = QHBoxLayout()
+    lbl_sf = QLabel("Start F:")
+    lbl_sf.setObjectName("lbl_section")
+    ui.rack_start_frame = QSpinBox()
+    ui.rack_start_frame.setRange(-10000, 10000)
+    ui.rack_start_frame.setValue(0)
+    lbl_ef = QLabel("End F:")
+    lbl_ef.setObjectName("lbl_section")
+    ui.rack_end_frame = QSpinBox()
+    ui.rack_end_frame.setRange(-10000, 10000)
+    ui.rack_end_frame.setValue(50)
+    frame_row.addWidget(lbl_sf)
+    frame_row.addWidget(ui.rack_start_frame)
+    frame_row.addWidget(lbl_ef)
+    frame_row.addWidget(ui.rack_end_frame)
+    gr.addLayout(frame_row)
+
+    ease_row = QHBoxLayout()
+    ui.rack_ease_in  = QCheckBox("Ease In")
+    ui.rack_ease_in.setChecked(True)
+    ui.rack_ease_out = QCheckBox("Ease Out")
+    ui.rack_ease_out.setChecked(True)
+    ease_row.addWidget(ui.rack_ease_in)
+    ease_row.addWidget(ui.rack_ease_out)
+    gr.addLayout(ease_row)
+
+    rack_tangent_row = QHBoxLayout()
+    lbl_rt = QLabel("Tangent:")
+    lbl_rt.setObjectName("lbl_section")
+    ui.rack_tangent_combo = QComboBox()
+    ui.rack_tangent_combo.addItems(["Ease (Slow)", "Linear", "Fast", "Smooth"])
+    rack_tangent_row.addWidget(lbl_rt)
+    rack_tangent_row.addWidget(ui.rack_tangent_combo)
+    gr.addLayout(rack_tangent_row)
+
+    ui.bake_rack_btn = QPushButton("Bake Rack Focus")
+    ui.bake_rack_btn.setObjectName("btn_primary")
+    gr.addWidget(ui.bake_rack_btn)
+    grp_rack.setLayout(gr)
+    layout.addWidget(grp_rack)
+
+    # ── Bottom ───────────────────────────────────────────────────────
+    layout.addStretch()
+    ui.log_cam_props_btn = QPushButton("Log Camera Properties")
+    ui.log_cam_props_btn.setStyleSheet("font-size:10px;")
+    layout.addWidget(ui.log_cam_props_btn)
+    ui.reset_lens_btn = QPushButton("Reset Lens")
+    ui.reset_lens_btn.setObjectName("btn_danger")
+    layout.addWidget(ui.reset_lens_btn)
+    tab.setLayout(layout)
+    return tab
