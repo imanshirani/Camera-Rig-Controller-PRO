@@ -7,7 +7,7 @@
 ![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=flat-square&logo=python&logoColor=white)
 ![PySide6](https://img.shields.io/badge/GUI-PySide6-41CD52?style=flat-square&logo=qt&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-purple?style=flat-square)
-![Version](https://img.shields.io/badge/version-0.0.1-orange)
+![Version](https://img.shields.io/badge/version-0.0.2-orange)
 ![AI](https://img.shields.io/badge/AI-Claude%20%7C%20Ollama%20%7C%20LM%20Studio-8A2BE2?style=flat-square)
 
 
