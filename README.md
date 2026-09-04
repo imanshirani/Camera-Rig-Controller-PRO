@@ -8,9 +8,11 @@
 ![PySide6](https://img.shields.io/badge/GUI-PySide6-41CD52?style=flat-square&logo=qt&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-purple?style=flat-square)
 ![Version](https://img.shields.io/badge/version-0.0.1-orange)
+![AI](https://img.shields.io/badge/AI-Claude%20%7C%20Ollama%20%7C%20LM%20Studio-8A2BE2?style=flat-square)
 
 
-A professional camera rigging tool for **3ds Max**, built with Python and PySide6.
+A professional camera rigging tool for **3ds Max**, built with Python and PySide6.  
+Control your camera rig with natural language using the built-in **AI Agent** — powered by Claude API or local models via Ollama / LM Studio.
 
 ![screenshot](etc/Screenshot.png)
 
@@ -97,6 +99,15 @@ A professional camera rigging tool for **3ds Max**, built with Python and PySide
 
 ![screenshot](etc/Vertigo.png)
 
+### 🤖 AI Agent Tab
+- Natural language camera control in **English or Farsi**
+- Powered by **Claude API** (Anthropic) or any **local model** via Ollama / LM Studio
+- Multi-turn conversation with full rig context awareness
+- Chains multiple tool calls to execute complex cinematic shots in one prompt
+- All 20+ rig actions exposed as AI tools
+
+![screenshot](etc/AIagenttab.png)
+
 ---
 
 ## 📒 Requirements
@@ -104,6 +115,7 @@ A professional camera rigging tool for **3ds Max**, built with Python and PySide
 - **3ds Max 2025+**
 - **Python 3.x** (bundled with 3ds Max)
 - **PySide6** (bundled with 3ds Max 2025+)
+- **AI Agent** *(optional)*: Claude API key **or** Ollama / LM Studio running locally
 
 ---
 
@@ -153,6 +165,130 @@ Note - you can make any shape you  want.
 5. **Lens Tab** — Control focal length, clipping, and depth of field
 6. **Framing Tab** — Set aspect ratio and enable composition guides on viewport
 7. **Motion Tab** — Add camera shake or steadicam simulation
+8. **AI Agent Tab** — Type natural language commands to control the entire rig
+
+---
+
+## 🤖 AI Agent
+
+Control the full camera rig with natural language. Works in **English** and **Farsi**.
+
+### Setup
+
+**Option A — Claude API (Cloud)**
+1. Get an API key from [console.anthropic.com](https://console.anthropic.com)
+2. In the AI tab, select **Claude** as provider and paste your key
+
+**Option B — Local Model (Ollama)**
+```bash
+ollama pull qwen2.5:7b
+# or any model that supports tool calling
+ollama serve
+```
+In the AI tab, select **Local Model**, set URL to `http://localhost:11434/v1`, and enter the model name.
+
+**Option C — LM Studio**
+1. Load any GGUF model in LM Studio
+2. Start the local server (default port 1234)
+3. Set URL to `http://localhost:1234/v1` in the AI tab
+
+---
+
+### 💬 Prompt Examples
+
+#### Basic Controls
+```
+Move the dolly to 75%
+```
+```
+Tilt the crane arm up 30 degrees
+```
+```
+Set focal length to 85mm
+```
+```
+Roll the camera 5 degrees for a dutch tilt
+```
+
+#### Animation
+```
+Create a dolly animation from 0% to 100% between frames 0 and 150 with ease in and ease out
+```
+```
+Set a keyframe at frame 0 with dolly at 0%, then at frame 100 with dolly at 50%
+```
+
+#### Orbit Shots
+```
+Create a circular orbit track with radius 200 around the subject
+```
+```
+Create orbit track radius 150 and enable follow path with banking
+```
+
+#### Cinematic Shots (multi-tool)
+```
+Set up a dramatic low-angle shot: crane height 30, pitch up 20 degrees, focal length 35mm
+```
+```
+Create a slow push-in: set focal length to 200mm, move dolly to 20%, then bake a dolly animation from 20% to 80% over 200 frames with ease in
+```
+```
+Classic Hitchcock vertigo effect setup: create orbit track radius 300, enable follow path, set focal length 50mm
+```
+
+#### Camera Shake
+```
+Enable subtle camera shake with frequency 0.3 and strength 2
+```
+```
+Add handheld camera feel: shake frequency 1.5, strength 5
+```
+```
+Disable camera shake
+```
+
+#### Framing & Composition
+```
+Show rule of thirds and golden ratio guides on the viewport
+```
+```
+Set aspect ratio to 2.39 anamorphic widescreen
+```
+```
+Enable safe frame with 16:9 aspect ratio
+```
+```
+Show all composition guides — thirds, golden ratio, diagonals, and center cross
+```
+
+#### Farsi / Persian
+```
+دوربین رو ۴۵ درجه به چپ بچرخون
+```
+```
+یه شات دایره‌ای با شعاع ۲۰۰ واحد بساز و follow path رو فعال کن
+```
+```
+یه انیمیشن دولی از فریم ۰ تا ۱۵۰ با ease in و ease out بپز
+```
+```
+فوکال لنگث رو ۸۵ میلیمتر بذار و یه لرزش دوربین ملایم اضافه کن
+```
+```
+وضعیت فعلی دوربین رو بگو
+```
+
+#### Reset
+```
+Reset everything to default
+```
+```
+Reset the dolly — remove all keyframes
+```
+```
+Restore the straight track and reset the crane
+```
 
 ---
 
@@ -177,6 +313,10 @@ camera_rig/
 │   └── bookmarks.py      — Shot bookmarks
 ├── framing/
 │   └── viewport_overlay.py — Aspect ratios + composition guides
+├── ai/                   — AI Agent (no extra dependencies)
+│   ├── agent.py          — Claude API + OpenAI-compatible local models
+│   ├── tools.py          — Tool definitions (JSON schema for 20+ rig actions)
+│   └── executor.py       — Bridge between tool calls and rig functions
 └── ui/
     ├── main_window.py    — CameraRigUI bridge class
     └── tabs/             — One file per tab

@@ -25,8 +25,56 @@ from camera_rig.ui.tabs.framing_tab import build_framing_tab
 from camera_rig.ui.tabs.bookmarks_tab import build_bookmarks_tab
 from camera_rig.ui.tabs.motion_tab import build_motion_tab
 from camera_rig.ui.tabs.vertigo_tab import build_vertigo_tab
+from camera_rig.ui.tabs.ai_tab import build_ai_tab
+from camera_rig.ai.agent import create_agent
+from camera_rig.ai.executor import ToolExecutor
+from PySide6.QtCore import QThread, Signal as QtSignal
+import threading
+import json
 
 log = logging.getLogger(__name__)
+
+
+class _AgentThread(QThread):
+    """
+    Runs the AI API call in a background thread.
+    Tool execution is dispatched back to the MAIN thread via signals
+    to avoid the DirtyNotificationEventMonitor 3ds Max error.
+    """
+    finished    = QtSignal(str)
+    need_tool   = QtSignal(str, str)   # tool_name, input_json → executed on main thread
+
+    def __init__(self, agent, message, rig_state):
+        super().__init__()
+        self._agent     = agent
+        self._message   = message
+        self._state     = rig_state
+        self._tool_result = None
+        self._tool_event  = threading.Event()
+
+    def set_tool_result(self, result: str):
+        """Called from main thread after a tool has been executed."""
+        self._tool_result = result
+        self._tool_event.set()
+
+    def run(self):
+        # Proxy executor: signals main thread for each tool call
+        thread_self = self
+
+        class _SignalExecutor:
+            def execute(self_, tool_name: str, tool_input: dict) -> str:
+                thread_self._tool_event.clear()
+                thread_self._tool_result = None
+                thread_self.need_tool.emit(tool_name, json.dumps(tool_input))
+                thread_self._tool_event.wait(timeout=30)
+                return thread_self._tool_result or "Tool execution timed out"
+
+            # needed by executor._get_camera_state
+            def _get_camera_state(self_, state):
+                return ""
+
+        result = self._agent.chat(self._message, self._state, _SignalExecutor())
+        self.finished.emit(result)
 
 
 class CameraRigUI(QWidget):
@@ -48,7 +96,10 @@ class CameraRigUI(QWidget):
         self.initial_crane_base_local_pos = None
         self.initial_crane_base_world_z = None
         self._initial_arm_z = 100.0
-        self._bookmarks = []
+        self._bookmarks   = []
+        self._ai_agent    = None
+        self._ai_thread   = None
+        self._ai_executor = None
 
         self._build_ui()
         self._connect_signals()
@@ -94,6 +145,7 @@ class CameraRigUI(QWidget):
         self.tabs.addTab(build_framing_tab(self),  "Framing")
         self.tabs.addTab(build_bookmarks_tab(self),"Bookmarks")
         self.tabs.addTab(build_vertigo_tab(self),  "Vertigo")
+        self.tabs.addTab(build_ai_tab(self),       "🤖 AI")
 
         self.main_layout.addWidget(self.tabs)
         self.setLayout(self.main_layout)
@@ -108,6 +160,16 @@ class CameraRigUI(QWidget):
         self.install_rig_btn.clicked.connect(self._install_rig)
         self.reset_all_btn.clicked.connect(self._reset_all)
         self.log_positions_btn.clicked.connect(self._on_log_positions)
+        # AI tab
+        self.ai_provider_combo.currentIndexChanged.connect(self._on_ai_provider_changed)
+        self.ai_send_btn.clicked.connect(self._on_ai_send)
+        # Wire the Enter key callback on the multi-line input box
+        self.ai_input_edit._send = self._on_ai_send
+        self.ai_clear_btn.clicked.connect(self._on_ai_clear)
+        self.ai_api_key_edit.editingFinished.connect(self._on_ai_settings_changed)
+        self.ai_local_url_edit.editingFinished.connect(self._on_ai_settings_changed)
+        self.ai_local_model_edit.editingFinished.connect(self._on_ai_settings_changed)
+        self.ai_claude_model_combo.currentIndexChanged.connect(self._on_ai_settings_changed)
         self.reset_dolly_btn.clicked.connect(self._reset_dolly)
         self.reset_crane_btn.clicked.connect(self._reset_crane)
         self.reset_direct_btn.clicked.connect(self._reset_direct)
@@ -193,6 +255,118 @@ class CameraRigUI(QWidget):
         self.reset_all_btn.setEnabled(enabled)
         self.toggle_helpers_btn.setEnabled(enabled)
         self.lookat_checkbox.setEnabled(enabled)
+
+    # ------------------------------------------------------------------
+    # AI Agent Handlers
+    # ------------------------------------------------------------------
+
+    def _on_ai_provider_changed(self, index: int):
+        self.ai_settings_stack.setCurrentIndex(index)
+        self._on_ai_settings_changed()
+
+    def _on_ai_settings_changed(self):
+        """Rebuild the agent when settings change."""
+        self._ai_agent = None
+        self._ai_executor = None
+        provider = self.ai_provider_combo.currentIndex()
+        try:
+            if provider == 0:
+                key = self.ai_api_key_edit.text().strip()
+                model = self.ai_claude_model_combo.currentText()
+                if key:
+                    self._ai_agent = create_agent("claude", api_key=key, model=model)
+                    self.ai_status_label.setText(f"Status: Claude ({model})")
+                    self.ai_status_label.setStyleSheet("color:#e8823c; font-size:10px;")
+                else:
+                    self.ai_status_label.setText("Status: No API key")
+                    self.ai_status_label.setStyleSheet("color:#555; font-size:10px;")
+            else:
+                url   = self.ai_local_url_edit.text().strip() or "http://localhost:11434/v1"
+                model = self.ai_local_model_edit.text().strip() or "llama3.1"
+                self._ai_agent = create_agent("local", base_url=url, model=model)
+                self.ai_status_label.setText(f"Status: Local ({model})")
+                self.ai_status_label.setStyleSheet("color:#0bc; font-size:10px;")
+
+            if self._ai_agent:
+                self._ai_executor = ToolExecutor(self._get_ai_state)
+        except Exception as e:
+            self.ai_status_label.setText(f"Status: Error — {e}")
+
+    def _get_ai_state(self) -> dict:
+        """Return current rig state dict for the AI executor."""
+        return {
+            'rig_nodes':                    self.rig_nodes,
+            'selected_camera':              self.selected_camera,
+            'path_constraint_controller':   self.path_constraint_controller,
+            'initial_target_world_pos':     self.initial_target_world_pos,
+            'initial_crane_base_world_pos': self.initial_crane_base_world_pos,
+            'initial_master_world_pos':     self.initial_master_world_pos,
+            'initial_master_rot':           self.initial_master_rot,
+        }
+
+    def _on_ai_send(self):
+        msg = self.ai_input_edit.toPlainText().strip()
+        if not msg:
+            return
+        if not self._ai_agent:
+            self._on_ai_settings_changed()
+        if not self._ai_agent:
+            self._ai_append_chat("System", "⚠️ Configure API key or local model URL first.")
+            return
+        if self._ai_thread and self._ai_thread.isRunning():
+            return
+
+        self._ai_append_chat("You", msg)
+        self.ai_input_edit.clear()  # QTextEdit.clear()
+        self.ai_send_btn.setEnabled(False)
+        self.ai_status_label.setText("Status: Thinking...")
+
+        # Build rig state text on main thread before launching background thread
+        rig_state = self._ai_executor._get_camera_state(self._get_ai_state())
+        self._ai_thread = _AgentThread(self._ai_agent, msg, rig_state)
+        self._ai_thread.finished.connect(self._on_ai_reply)
+        # Tool calls arrive as signals → execute on main thread → no MXS errors
+        self._ai_thread.need_tool.connect(self._on_ai_tool_needed)
+        self._ai_thread.start()
+
+    def _on_ai_tool_needed(self, tool_name: str, input_json: str):
+        """Execute a tool on the MAIN thread (safe for 3ds Max scene modifications)."""
+        try:
+            tool_input = json.loads(input_json)
+            result = self._ai_executor.execute(tool_name, tool_input)
+            # Sync path_constraint_controller if orbit track was just assigned
+            if tool_name == 'create_orbit_track':
+                new_ctrl = self.rig_nodes.get('_ai_path_ctrl')
+                if new_ctrl:
+                    self.path_constraint_controller = new_ctrl
+        except Exception as e:
+            result = f"Error: {e}"
+        if self._ai_thread:
+            self._ai_thread.set_tool_result(result)
+
+    def _on_ai_reply(self, reply: str):
+        self._ai_append_chat("AI", reply)
+        self.ai_send_btn.setEnabled(True)
+        provider = self.ai_provider_combo.currentIndex()
+        if provider == 0:
+            model = self.ai_claude_model_combo.currentText()
+            self.ai_status_label.setText(f"Status: Claude ({model})")
+        else:
+            model = self.ai_local_model_edit.text().strip() or "llama3.1"
+            self.ai_status_label.setText(f"Status: Local ({model})")
+        rt.redrawViews()
+
+    def _ai_append_chat(self, sender: str, text: str):
+        colors = {"You": "#e8823c", "AI": "#0bc", "System": "#888"}
+        color  = colors.get(sender, "#d4d4d4")
+        html   = (f'<span style="color:{color}; font-weight:600;">{sender}:</span>'
+                  f'<br><span style="color:#d4d4d4;">{text}</span><br><br>')
+        self.ai_chat_display.append(html)
+
+    def _on_ai_clear(self):
+        self.ai_chat_display.clear()
+        if self._ai_agent:
+            self._ai_agent.clear_history()
 
     def _on_log_positions(self):
         """Print all rig node world positions to the Max listener for debugging."""

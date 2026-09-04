@@ -337,18 +337,34 @@ def bake_dolly_easing(path_ctrl, frame_start: int, frame_end: int,
     rt.py_tangent     = tangent_type
     rt.execute("""
     (
-        try(deleteKeys py_ctrl #allKeys)catch(donothing)
-        with animate on
-        (
-            at time py_t1 py_ctrl.percent = py_v1
-            at time py_t2 py_ctrl.percent = py_v2
-        )
+        -- Get or create the percent sub-controller
         local atrack = py_ctrl.percent.controller
-        if atrack != undefined and atrack.keys.count >= 2 do
+        if atrack == undefined do
         (
-            local ttype = case py_tangent of ("slow":#slow "linear":#linear "fast":#fast "smooth":#smooth default:#slow)
-            if py_ease_in  do setTangentType atrack.keys[1]                #out ttype
-            if py_ease_out do setTangentType atrack.keys[atrack.keys.count] #in  ttype
+            atrack = bezier_float()
+            py_ctrl.percent.controller = atrack
+        )
+        -- Clear existing keys
+        try(deleteKeys atrack #allKeys)catch(donothing)
+        -- Add keyframes directly on the sub-controller
+        local k1 = addNewKey atrack py_t1
+        local k2 = addNewKey atrack py_t2
+        if k1 != undefined do ( k1.value = py_v1 )
+        if k2 != undefined do ( k2.value = py_v2 )
+        -- Apply tangent type
+        if atrack.keys.count >= 2 do
+        (
+            local ttype = case py_tangent of (
+                "slow":   #slow
+                "linear": #linear
+                "fast":   #fast
+                "smooth": #smooth
+                default:  #slow
+            )
+            try (
+                if py_ease_in  do atrack.keys[1].outTangentType               = ttype
+                if py_ease_out do atrack.keys[atrack.keys.count].inTangentType = ttype
+            ) catch ( donothing )
         )
     )
     """)

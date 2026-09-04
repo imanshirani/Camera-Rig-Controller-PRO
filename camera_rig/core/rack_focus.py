@@ -64,9 +64,17 @@ def bake_rack_focus(camera, from_dist: float, to_dist: float,
             local atrack = py_cam.mdof_focalDepth.controller
             if atrack != undefined and atrack.keys.count >= 2 do
             (
-                local ttype = case py_tangent of ("slow":#slow "linear":#linear "fast":#fast "smooth":#smooth default:#slow)
-                if py_ease_in  do setTangentType atrack.keys[1]                #out ttype
-                if py_ease_out do setTangentType atrack.keys[atrack.keys.count] #in  ttype
+                local ttype = case py_tangent of (
+                    "slow":   #slow
+                    "linear": #linear
+                    "fast":   #fast
+                    "smooth": #smooth
+                    default:  #slow
+                )
+                try (
+                    if py_ease_in  do atrack.keys[1].outTangentType               = ttype
+                    if py_ease_out do atrack.keys[atrack.keys.count].inTangentType = ttype
+                ) catch ( donothing )
             )
         )
         """)
@@ -81,9 +89,17 @@ def bake_rack_focus(camera, from_dist: float, to_dist: float,
             local atrack = py_cam.targetDistance.controller
             if atrack != undefined and atrack.keys.count >= 2 do
             (
-                local ttype = case py_tangent of ("slow":#slow "linear":#linear "fast":#fast "smooth":#smooth default:#slow)
-                if py_ease_in  do setTangentType atrack.keys[1]                #out ttype
-                if py_ease_out do setTangentType atrack.keys[atrack.keys.count] #in  ttype
+                local ttype = case py_tangent of (
+                    "slow":   #slow
+                    "linear": #linear
+                    "fast":   #fast
+                    "smooth": #smooth
+                    default:  #slow
+                )
+                try (
+                    if py_ease_in  do atrack.keys[1].outTangentType               = ttype
+                    if py_ease_out do atrack.keys[atrack.keys.count].inTangentType = ttype
+                ) catch ( donothing )
             )
         )
         """)
